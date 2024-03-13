@@ -50,57 +50,62 @@ validation_dataloader = DataLoader(
     batch_size = args.batch_size,
     shuffle = False
 )
-print("Data Loaded successfully")
-
-# Instantiate model with features size
-focuses = ["rgb_feats","rgb_feats_10","rgb_feats_15"]
-training_focus = focuses[0]
-
-rgb_size = len(df["rgb_feats"][0])
-model = EmbeddingModel(num_classes,df,rgb_size=rgb_size).to(args.DEVICE)
+print("Data Loaded successfully \n")
 
 
-criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
-scheduler = torch.optim.lr_scheduler.OneCycleLR(
-                        optimizer,
-                        max_lr=args.lr,
-                        epochs=args.epoch,
-                        steps_per_epoch=len(train_dataloader),
-                        div_factor=10,
-                        final_div_factor=1,
-                        pct_start=0.1,
-                        anneal_strategy="cos",
-                    )
+experiments = ["rgb_feats","rgb_feats_10","rgb_feats_15"]
+for focus in experiments:
+    training_focus = focus
 
-acc_top_1, acc_top_5 = [],[]
-train_loss, train_score = [],[]
-prev_valid_acc = 0
+    rgb_size = len(df[training_focus][0])
+    classifier_to_use = "rgb"
 
-model_name = f"{training_focus}_with_embedding-model-{args.IMG_SIZE}x{args.IMG_SIZE}"
-counter = 0 
-for epoch in tqdm(range(1, args.epoch+1),desc="Training >>>"):
-    training_loss, training_score = trainEpoch(train_dataloader,model, criterion, optimizer, 
-                                               scheduler, epoch,classifier_to_use="rgb",color_feat_to_extract=training_focus)
-    train_loss.append(training_loss)
-    train_score.append(training_score)
-    print(f"train loss : {training_loss} | train_acc : {training_score}")
-    val_acc_top_1, val_acc_top_5 = test_classification(validation_dataloader, model,colorFeat="rgb_feats")
-    acc_top_1.append(val_acc_top_1)
-    acc_top_5.append(val_acc_top_5)
-    if prev_valid_acc<val_acc_top_5:
-        print("model saved..!!")
-        # torch.save(model.state_dict(), "best.pt")
-        save_checkpoint(model, scheduler, optimizer, epoch, model_name, train_loss, train_score)
-        prev_valid_acc = val_acc_top_5
-        counter = 0
-    else:
-        counter +=1
-    if(counter==5):
-        print(f"early stopping applied, training done @ epoch {epoch}")
-        break
-    print(f"\n.............................{epoch} end............................")
 
-rgb_metrics_df = pd.DataFrame({"acc_top_1":acc_top_1,"acc_top_5":acc_top_5,"train_loss":train_loss,"train_score":train_score})
-rgb_metrics_df.to_csv(args.ARTEFACT_FOLDER+f"{training_focus}_metrics_df.csv",index=False)
-print("Done!!!!!!!")
+    # Instantiate model with features size
+    model = EmbeddingModel(num_classes,df,rgb_size=rgb_size).to(args.DEVICE)
+
+
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(
+                            optimizer,
+                            max_lr=args.lr,
+                            epochs=args.epoch,
+                            steps_per_epoch=len(train_dataloader),
+                            div_factor=10,
+                            final_div_factor=1,
+                            pct_start=0.1,
+                            anneal_strategy="cos",
+                        )
+
+    acc_top_1, acc_top_5 = [],[]
+    train_loss, train_score = [],[]
+    prev_valid_acc = 0
+
+    model_name = f"{training_focus}_with_embedding-model-{args.IMG_SIZE}x{args.IMG_SIZE}"
+    counter = 0 
+    for epoch in tqdm(range(1, args.epoch+1),desc="Training >>>"):
+        training_loss, training_score = trainEpoch(train_dataloader,model, criterion, optimizer, 
+                                                scheduler, epoch,classifier_to_use=classifier_to_use,color_feat_to_extract=training_focus)
+        train_loss.append(training_loss)
+        train_score.append(training_score)
+        print(f"train loss : {training_loss} | train_acc : {training_score}")
+        val_acc_top_1, val_acc_top_5 = test_classification(validation_dataloader, model,colorFeat=training_focus)
+        acc_top_1.append(val_acc_top_1)
+        acc_top_5.append(val_acc_top_5)
+        if prev_valid_acc<val_acc_top_5:
+            print("model saved..!!")
+            # torch.save(model.state_dict(), "best.pt")
+            save_checkpoint(model, scheduler, optimizer, epoch, model_name, train_loss, train_score)
+            prev_valid_acc = val_acc_top_5
+            counter = 0
+        else:
+            counter +=1
+        if(counter==5):
+            print(f"early stopping applied, training done @ epoch {epoch}")
+            break
+        print(f"\n.............................{epoch} end............................")
+
+    result_df = pd.DataFrame({"acc_top_1":acc_top_1,"acc_top_5":acc_top_5,"train_loss":train_loss,"train_score":train_score})
+    result_df.to_csv(args.ARTEFACT_FOLDER+f"{training_focus}_metrics_df.csv",index=False)
+    print(f">>>>>>>>>>>>>>>>> Experiment {training_focus} is Done!!!!!!!")

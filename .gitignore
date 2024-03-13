@@ -160,5 +160,6 @@ cython_debug/
 #.idea/
 
 dataset
+artefacts
 .DS_Store
 models
