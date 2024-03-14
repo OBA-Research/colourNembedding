@@ -24,7 +24,7 @@ class EmbeddingModel(nn.Module):
             self.rgbClassifier = nn.Linear(rgb_size+embedding_size,num_classes)
         elif(hsv_size):
             self.hsvClassifier = nn.Linear(hsv_size+embedding_size,num_classes)
-        else:
+        elif(hist_size):
             self.histClassifier = nn.Linear(hist_size+embedding_size,num_classes)
 
     def forward(self,x):

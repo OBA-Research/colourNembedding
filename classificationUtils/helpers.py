@@ -136,7 +136,7 @@ def test_classification(loader, model,colorFeat= None):
     print(f"Classification accuracy: {acc_top_1:0.4f}, MAP@5: {acc_top_5:0.4f}")
     return acc_top_1, acc_top_5
 
-def trainEpoch(dataloader,model,criterion, optimizer, scheduler, epoch,classifier_to_use,color_feat_to_extract):
+def trainEpoch(dataloader,model,criterion, optimizer, scheduler, epoch,classifier_to_use=None,color_feat_to_extract=None):
     targets_all=[]
     predicts_all = []
     losses = []
