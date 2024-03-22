@@ -53,8 +53,7 @@ validation_dataloader = DataLoader(
 print("Data Loaded successfully \n")
 
 # Instantiate model with features size
-# experiments = ["hist_feats_rgb_4","hist_feats_hsv_4","hist_feats_rgb_8","hist_feats_hsv_8","hist_feats_rgb_16","hist_feats_hsv_16"]
-experiments = ["hist_feats_hsv_4","hist_feats_rgb_8","hist_feats_hsv_8","hist_feats_rgb_16","hist_feats_hsv_16"]
+experiments = ["hist_feats_rgb_4","hist_feats_hsv_4","hist_feats_rgb_8","hist_feats_hsv_8","hist_feats_rgb_16","hist_feats_hsv_16"]
 for focus in experiments:
     training_focus = focus
 
@@ -96,9 +95,8 @@ for focus in experiments:
         acc_top_1.append(val_acc_top_1)
         acc_top_5.append(val_acc_top_5)
         if prev_valid_acc<val_acc_top_5:
-            print("model saved..!!")
-            # torch.save(model.state_dict(), "best.pt")
             save_checkpoint(model, scheduler, optimizer, epoch, model_name, train_loss, train_score)
+            print("model saved..!!")
             prev_valid_acc = val_acc_top_5
             counter = 0
         else:

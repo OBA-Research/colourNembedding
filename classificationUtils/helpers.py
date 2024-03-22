@@ -96,30 +96,30 @@ def test_classification(loader, model,colorFeat= None):
     
     model.eval()
     dataloader = tqdm(loader, desc="Validation with Classification >>>")
-    
-    for batch_no,(x, y,img_ids) in enumerate(dataloader):
-        x = x.to(args.DEVICE)
-        y = decode_one_hot(y)
-        x = model(x)
-        #improve embedding
-        if(colorFeat=="rgb_feats" or colorFeat=="rgb_feats_10" or colorFeat=="rgb_feats_15"):
-            color_feats = model.extractColorFeatures(img_ids,colorFeat)
-            x = model.fuseFeatures(x,color_feats)
-            outputs = model.rgbClassifier(x)
-        elif(colorFeat=="hsv_feats" or colorFeat=="hsv_feats_10"or colorFeat=="hsv_feats_15"):
-            color_feats = model.extractColorFeatures(img_ids,colorFeat)
-            x = model.fuseFeatures(x,color_feats)
-            outputs = model.hsvClassifier(x)
+    with torch.no_grad():
+        for batch_no,(x, y,img_ids) in enumerate(dataloader):
+            x = x.to(args.DEVICE)
+            y = decode_one_hot(y)
+            x = model(x)
+            #improve embedding
+            if(colorFeat=="rgb_feats" or colorFeat=="rgb_feats_10" or colorFeat=="rgb_feats_15"):
+                color_feats = model.extractColorFeatures(img_ids,colorFeat)
+                x = model.fuseFeatures(x,color_feats)
+                outputs = model.rgbClassifier(x)
+            elif(colorFeat=="hsv_feats" or colorFeat=="hsv_feats_10"or colorFeat=="hsv_feats_15"):
+                color_feats = model.extractColorFeatures(img_ids,colorFeat)
+                x = model.fuseFeatures(x,color_feats)
+                outputs = model.hsvClassifier(x)
 
-        elif(colorFeat in ["hist_feats_rgb_4", "hist_feats_hsv_4", "hist_feats_rgb_8","hist_feats_hsv_8","hist_feats_rgb_16","hist_feats_hsv_16"]):
-            color_feats = model.extractColorFeatures(img_ids,colorFeat)
-            x = model.fuseFeatures(x,color_feats)
-            outputs = model.histClassifier(x)
-        #use only embedding
-        else:
-            outputs = model.classifier(x)
-        targets_all.extend(y)
-        outputs_all.extend(torch.sigmoid(outputs).detach().cpu().numpy()) 
+            elif(colorFeat in ["hist_feats_rgb_4", "hist_feats_hsv_4", "hist_feats_rgb_8","hist_feats_hsv_8","hist_feats_rgb_16","hist_feats_hsv_16"]):
+                color_feats = model.extractColorFeatures(img_ids,colorFeat)
+                x = model.fuseFeatures(x,color_feats)
+                outputs = model.histClassifier(x)
+            #use only embedding
+            else:
+                outputs = model.classifier(x)
+            targets_all.extend(y)
+            outputs_all.extend(torch.sigmoid(outputs).detach().cpu().numpy()) 
     
     # repeat targets to N_MATCHES for easy calculation of MAP@5
     y = np.repeat([targets_all], repeats=args.N_MATCHES, axis=0).T
@@ -136,7 +136,7 @@ def test_classification(loader, model,colorFeat= None):
     print(f"Classification accuracy: {acc_top_1:0.4f}, MAP@5: {acc_top_5:0.4f}")
     return acc_top_1, acc_top_5
 
-def trainEpoch(dataloader,model,criterion, optimizer, scheduler, epoch,classifier_to_use,color_feat_to_extract):
+def trainEpoch(dataloader,model,criterion, optimizer, scheduler, epoch,classifier_to_use=None,color_feat_to_extract=None):
     targets_all=[]
     predicts_all = []
     losses = []
