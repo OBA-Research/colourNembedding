@@ -86,9 +86,8 @@ for epoch in tqdm(range(1, args.epoch+1),desc="Training >>>"):
     acc_top_1.append(val_acc_top_1)
     acc_top_5.append(val_acc_top_5)
     if prev_valid_acc<val_acc_top_5:
-        print("model saved..!!")
-        # torch.save(model.state_dict(), "best.pt")
         save_checkpoint(model, scheduler, optimizer, epoch, model_name, train_loss, train_score)
+        print("model saved..!!")
         prev_valid_acc = val_acc_top_5
         counter = 0
     else:
