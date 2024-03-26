@@ -49,24 +49,3 @@ class EmbeddingModel(nn.Module):
             features = torch.cat((embedding,colorFeats))
             fused_features.append(features)
         return torch.stack(fused_features)
-
-    # def classifyWithEmbedding(self,x):
-    #     """
-    #     return hotel class using just embeddings
-    #     """
-    #     hotel_class = self.classifier(x)
-    #     return hotel_class
-
-    # def classifyWithFusedFeatures(self,fused_features,classifer_to_use):
-    #     """
-    #     return hotel class using improved embeddings 
-    #     """
-    #     if classifer_to_use=="rgb":
-    #         hotel_class = self.rgbClassifier(fused_features)
-    #         return hotel_class
-    #     elif classifer_to_use=="hsv":
-    #         hotel_class = self.hsvClassifier(fused_features)
-    #         return hotel_class
-    #     else:
-    #         hotel_class = self.histClassifier(fused_features)
-    #         return hotel_class
