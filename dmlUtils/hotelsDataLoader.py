@@ -29,3 +29,8 @@ class HOTELS(Dataset):
         img = torch.tensor(img, dtype = torch.float)
         label = torch.tensor(int(label), dtype = torch.int)
         return img/255.0, label, img_id
+    
+
+def data_and_label_getter(curr_batch):
+    batch_data_and_label = list(curr_batch[:2])
+    return batch_data_and_label

@@ -2,7 +2,7 @@ from pathlib import Path
 import torch
 
 class args:
-    epoch = 20
+    epoch = 5
     batch_size = 32
     lr=1e-3
     seed = 2024
@@ -11,6 +11,9 @@ class args:
     OUTPUT_FOLDER = str(Path().absolute().joinpath("models"))+"/"
     ARTEFACT_FOLDER = str(Path().absolute().joinpath("artefacts"))+"/"
     IMG_SIZE = 224
+    N_WORKER = 0
+    PATIENCE = 2
+    embedding_size = 128
+    ACCUMULATION_STEPS = 10
+    N_CLASSES = 1000
     
-
-# print(args.ARTEFACT_FOLDER)

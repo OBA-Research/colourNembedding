@@ -1,10 +1,12 @@
 import warnings
 warnings.filterwarnings("ignore")
 
+
 from dmlUtils.args import args
-from dmlUtils.helpers import seed_everything,splitData, getImgsDirs, test_dml, trainEpoch, save_checkpoint
-from dmlUtils.hotelsDataLoader import HOTELS
-from dmlUtils.models import EmbeddingModel
+from dmlUtils.helpers import getHooks,getTester,attachEndOfEpochHook, seed_everything,splitData, getImgsDirs
+from dmlUtils.hotelsDataLoader import HOTELS, data_and_label_getter
+from dmlUtils.models import getTrunk,getEmbedder,get_optimizers,get_schedulers,HotelTrainer
+
 
 from pathlib import Path
 
@@ -17,10 +19,18 @@ from tqdm import tqdm
 
 from pytorch_metric_learning import losses, miners, distances, testers,reducers
 from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
+import pytorch_metric_learning
+import logging
+logging.getLogger().setLevel(logging.INFO)
+logging.info("VERSION %s" % pytorch_metric_learning.__version__)
 import faiss
 
-
 seed_everything(args.seed)
+
+logsPath = Path().absolute().joinpath("artefacts/dml/logs")
+tensorboardPath = Path().absolute().joinpath("artefacts/dml/tensorboard")
+modelsPath = Path().absolute().joinpath("artefacts/dml/models")
+
 
 df_pikcle_dir = Path().absolute().joinpath("dataset/randomHotels/randomHotelsFeats2.pkl")
 df = pd.read_pickle(df_pikcle_dir)
@@ -54,12 +64,6 @@ train_dataloader = DataLoader(
     batch_size = args.batch_size,
     shuffle = True
 )
-ref_dataloader = DataLoader(
-    train_dataset,
-    num_workers =0,
-    batch_size = args.batch_size,
-    shuffle = False
-)
 validation_dataloader = DataLoader(
     validation_dataset,
     num_workers =0,
@@ -68,62 +72,53 @@ validation_dataloader = DataLoader(
 )
 print("Data Loaded successfully \n")
 
+
+
 dataset_dict = {"train": train_dataset, "val": validation_dataset}
 
 
 
-# # Instantiate model
-# model = EmbeddingModel(num_classes,df).to(args.DEVICE)
+# Instantiate models
+trunk = getTrunk()
+embedder = getEmbedder(trunk_output_size=trunk.num_features,embedding_size=args.embedding_size)
+trunk_optimizer,embedder_optimizer,loss_optimizer = get_optimizers(trunk)
+trunk_schedule, embedder_schedule, loss_schedule= get_schedulers(trunk_optimizer,embedder_optimizer,loss_optimizer,train_dataloader)
 
 
-# distance = distances.CosineSimilarity()
-# reducer = reducers.ThresholdReducer(low=0)
-# loss_func = losses.TripletMarginLoss(margin=0.2, distance=distance, reducer=reducer)
-# miner = miners.TripletMarginMiner(margin=0.2, distance=distance, type_of_triplets="semihard")
+distance = distances.CosineSimilarity()
+reducer = reducers.ThresholdReducer(low=0)
+loss_func = losses.TripletMarginLoss(margin=0.2, distance=distance, reducer=reducer)
+loss_func = losses.ArcFaceLoss(num_classes=args.N_CLASSES, embedding_size=args.embedding_size).to(args.DEVICE)
+miner = miners.TripletMarginMiner(margin=0.2, distance=distance, type_of_triplets="semihard")
 
-# accuracy_calculator = AccuracyCalculator(include=("precision_at_1","mean_average_precision"), k=5, device=torch.device("cpu"))
+hooks = getHooks(logPath=logsPath,tensorboardPath=tensorboardPath,experimentName="dml")
+tester = getTester(hooks)
+end_of_epoch_hook = attachEndOfEpochHook(hooks,tester=tester,dataset_dict=dataset_dict,model_path=modelsPath)
 
-# optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
-# scheduler = torch.optim.lr_scheduler.OneCycleLR(
-#                         optimizer,
-#                         max_lr=args.lr,
-#                         epochs=args.epoch,
-#                         steps_per_epoch=len(train_dataloader),
-#                         div_factor=10,
-#                         final_div_factor=1,
-#                         pct_start=0.1,
-#                         anneal_strategy="cos",
-#                     )
 
-# acc_top_1, acc_top_5 = [],[]
-# train_loss = []
-# prev_valid_acc = 0
+trainer = HotelTrainer(
+    models={"trunk": trunk, "embedder": embedder},
+    optimizers={"trunk_optimizer": trunk_optimizer, "embedder_optimizer": embedder_optimizer, "metric_loss_optimizer": loss_optimizer},
+    batch_size=args.batch_size,
+    loss_funcs={"metric_loss": loss_func},
+    mining_funcs={"tuple_miner":miner},
+    dataset=train_dataset,
+    data_device=args.DEVICE,
+    data_and_label_getter = data_and_label_getter,
+    dataloader_num_workers=args.N_WORKER,
+    end_of_epoch_hook=end_of_epoch_hook,
+    lr_schedulers={
+        'trunk_scheduler_by_iteration': trunk_schedule,
+        'embedder_scheduler_by_iteration': embedder_schedule,
+        'metric_loss_scheduler_by_iteration': loss_schedule,
+    },
+    accumulation_steps=args.ACCUMULATION_STEPS
+)
 
-# model_name = "dml_embedding-model-{args.IMG_SIZE}x{args.IMG_SIZE}"
-# counter = 0 
+trainer.train(num_epochs=args.epoch)
 
-# for epoch in tqdm(range(1, args.epoch+1),desc="Training >>>"):
-#     # training_loss = trainEpoch(train_dataloader,model,loss_func,miner,optimizer,scheduler,epoch,args.epoch)
-#     training_loss = trainEpoch(train_dataloader,model,loss_func,miner,optimizer,scheduler=None,epoch=epoch,epochs=args.epoch)
-#     train_loss.append(training_loss)
-#     print(f"train loss : {training_loss}")
-
-#     val_acc_top_1, val_acc_top_5 = test_dml(ref_dataloader,validation_dataloader, model,accuracy_calculator,improveEmbedding=False,colorFeat=None)
-#     acc_top_1.append(val_acc_top_1)
-#     acc_top_5.append(val_acc_top_5)
-
-#     if prev_valid_acc<val_acc_top_5:
-#         save_checkpoint(model, scheduler, optimizer, epoch, model_name, train_loss)
-#         print("model saved..!!")
-#         prev_valid_acc = val_acc_top_5
-#         counter = 0
-#     else:
-#         counter +=1
-#     if(counter==5):
-#         print(f"early stopping applied, training done @ epoch {epoch}")
-#         break
-#     print(f".............................{epoch} end............................\n")
-
-# result_df = pd.DataFrame({"acc_top_1":acc_top_1,"acc_top_5":acc_top_5,"train_loss":train_loss})
-# result_df.to_csv(args.ARTEFACT_FOLDER+"dml_metrics_df.csv",index=False)
-# print(f">>>>>>>>>>>>>>>>> Experiment is Done!!!!!!!")
+loss_histories = hooks.get_loss_history()
+print(loss_histories)
+# Get all accuracy histories
+acc_histories = hooks.get_accuracy_history(tester, "val", return_all_metrics=True)
+print(acc_histories)

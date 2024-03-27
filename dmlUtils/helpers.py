@@ -1,10 +1,46 @@
 import torch
+import pytorch_metric_learning.utils.logging_presets as LP
+from pytorch_metric_learning import testers
+from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
+
 import numpy as np
 import random
 import os
 from dmlUtils.args import args
+from dmlUtils.hotelsDataLoader import data_and_label_getter
 
 from tqdm import tqdm
+
+def getHooks(logPath,tensorboardPath,experimentName):
+    record_keeper, _, _ = LP.get_record_keeper(logPath,tensorboard_folder=tensorboardPath,experiment_name=experimentName)
+    hooks = LP.get_hook_container(record_keeper, primary_metric='mean_average_precision')
+    return hooks
+
+def getTester(hooks):
+    tester = testers.GlobalEmbeddingSpaceTester(
+    end_of_testing_hook=hooks.end_of_testing_hook,
+    accuracy_calculator=AccuracyCalculator(
+        include=['mean_average_precision'],
+        device=torch.device("cpu"),
+        k=5),
+    dataloader_num_workers=args.N_WORKER,
+    data_device=args.DEVICE,
+    batch_size=args.batch_size,
+    data_and_label_getter = data_and_label_getter
+)
+    return tester
+
+def attachEndOfEpochHook(hooks,tester,dataset_dict,model_path):
+    end_of_epoch_hook = hooks.end_of_epoch_hook(
+    tester, 
+    dataset_dict,
+    model_path,
+    test_interval=1, 
+    patience=args.PATIENCE, 
+    splits_to_eval = [('val', ['train'])]
+)
+    return end_of_epoch_hook
+
 
 
 def seed_everything(seed):
@@ -141,3 +177,5 @@ def trainEpoch(dataloader,model,loss_func,miner, optimizer, scheduler, epoch,epo
             t.set_description(desc)
         
     return np.mean(losses)
+
+
