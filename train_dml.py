@@ -88,7 +88,6 @@ trunk_schedule, embedder_schedule, loss_schedule= get_schedulers(trunk_optimizer
 distance = distances.CosineSimilarity()
 reducer = reducers.ThresholdReducer(low=0)
 loss_func = losses.TripletMarginLoss(margin=0.2, distance=distance, reducer=reducer)
-loss_func = losses.ArcFaceLoss(num_classes=args.N_CLASSES, embedding_size=args.embedding_size).to(args.DEVICE)
 miner = miners.TripletMarginMiner(margin=0.2, distance=distance, type_of_triplets="semihard")
 
 hooks = getHooks(logPath=logsPath,tensorboardPath=tensorboardPath,experimentName="dml")
