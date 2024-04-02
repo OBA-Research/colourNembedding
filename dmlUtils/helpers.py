@@ -2,6 +2,7 @@ import torch
 import pytorch_metric_learning.utils.logging_presets as LP
 from pytorch_metric_learning import testers
 from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
+from pytorch_metric_learning.utils import accuracy_calculator
 
 import numpy as np
 import random
@@ -11,16 +12,26 @@ from dmlUtils.hotelsDataLoader import data_and_label_getter
 
 from tqdm import tqdm
 
-def getHooks(logPath,tensorboardPath,experimentName):
-    record_keeper, _, _ = LP.get_record_keeper(logPath,tensorboard_folder=tensorboardPath,experiment_name=experimentName)
+def getHooks(logPath,tensorboardPath):
+    record_keeper, _, _ = LP.get_record_keeper(logPath,tensorboard_folder=tensorboardPath)
     hooks = LP.get_hook_container(record_keeper, primary_metric='mean_average_precision')
     return hooks
+
+class NewCalculator(AccuracyCalculator):
+    def calculate_precision_at_5(self, knn_labels, query_labels, **kwargs):
+        return accuracy_calculator.precision_at_k(knn_labels, 
+                                                  query_labels[:, None], 5,
+                                                  self.avg_of_avgs,self.return_per_class,
+                                                  self.label_comparison_fn)
+
+    def requires_knn(self):
+        return super().requires_knn() + ["precision_at_5"] 
 
 def getTester(hooks):
     tester = testers.GlobalEmbeddingSpaceTester(
     end_of_testing_hook=hooks.end_of_testing_hook,
-    accuracy_calculator=AccuracyCalculator(
-        include=['mean_average_precision'],
+    accuracy_calculator=NewCalculator(
+        include=['mean_average_precision','precision_at_1','precision_at_5'],
         device=torch.device("cpu"),
         k=5),
     dataloader_num_workers=args.N_WORKER,
@@ -40,7 +51,6 @@ def attachEndOfEpochHook(hooks,tester,dataset_dict,model_path):
     splits_to_eval = [('val', ['train'])]
 )
     return end_of_epoch_hook
-
 
 
 def seed_everything(seed):
@@ -162,9 +172,9 @@ def trainEpoch(dataloader,model,loss_func,miner, optimizer, scheduler, epoch,epo
             color_feats = model.extractColorFeatures(img_ids,feat=color_feat_to_extract)
             embeddings = model.fuseFeatures(embeddings,color_feats)
         
-        hard_pairs = miner(embeddings, y)
+        tupple_pairs = miner(embeddings, y)
 
-        loss = loss_func(embeddings,y,hard_pairs)
+        loss = loss_func(embeddings,y,tupple_pairs)
         loss.backward()
         optimizer.step()
 

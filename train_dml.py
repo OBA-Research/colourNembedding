@@ -77,7 +77,6 @@ print("Data Loaded successfully \n")
 dataset_dict = {"train": train_dataset, "val": validation_dataset}
 
 
-
 # Instantiate models
 trunk = getTrunk()
 embedder = getEmbedder(trunk_output_size=trunk.num_features,embedding_size=args.embedding_size)
@@ -88,12 +87,11 @@ trunk_schedule, embedder_schedule, loss_schedule= get_schedulers(trunk_optimizer
 distance = distances.CosineSimilarity()
 reducer = reducers.ThresholdReducer(low=0)
 loss_func = losses.TripletMarginLoss(margin=0.2, distance=distance, reducer=reducer)
-miner = miners.TripletMarginMiner(margin=0.2, distance=distance, type_of_triplets="semihard")
+miner = miners.TripletMarginMiner(margin=0.2, distance=distance, type_of_triplets="all")
 
-hooks = getHooks(logPath=logsPath,tensorboardPath=tensorboardPath,experimentName="dml")
+hooks = getHooks(logPath=logsPath,tensorboardPath=tensorboardPath)
 tester = getTester(hooks)
 end_of_epoch_hook = attachEndOfEpochHook(hooks,tester=tester,dataset_dict=dataset_dict,model_path=modelsPath)
-
 
 trainer = HotelTrainer(
     models={"trunk": trunk, "embedder": embedder},
@@ -105,6 +103,7 @@ trainer = HotelTrainer(
     data_device=args.DEVICE,
     data_and_label_getter = data_and_label_getter,
     dataloader_num_workers=args.N_WORKER,
+    end_of_iteration_hook=hooks.end_of_iteration_hook,
     end_of_epoch_hook=end_of_epoch_hook,
     lr_schedulers={
         'trunk_scheduler_by_iteration': trunk_schedule,
@@ -116,8 +115,8 @@ trainer = HotelTrainer(
 
 trainer.train(num_epochs=args.epoch)
 
-loss_histories = hooks.get_loss_history()
-print(loss_histories)
-# Get all accuracy histories
-acc_histories = hooks.get_accuracy_history(tester, "val", return_all_metrics=True)
-print(acc_histories)
+# loss_histories = hooks.get_loss_history()
+# print(loss_histories)
+# # Get all accuracy histories
+# acc_histories = hooks.get_accuracy_history(tester, "val", return_all_metrics=True)
+# print(acc_histories)
