@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader
 
 from tqdm import tqdm
 
-from pytorch_metric_learning import losses, miners, distances, testers,reducers
+from pytorch_metric_learning import losses, miners, distances, testers,reducers, samplers
 from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
 import pytorch_metric_learning
 import logging
@@ -76,17 +76,20 @@ print("Data Loaded successfully \n")
 
 dataset_dict = {"train": train_dataset, "val": validation_dataset}
 
+sampler = samplers.MPerClassSampler(
+    train_df.hotel_id, m=4, length_before_new_iter=len(train_dataset)
+)
 
 # Instantiate models
 trunk = getTrunk()
 embedder = getEmbedder(trunk_output_size=trunk.num_features,embedding_size=args.embedding_size)
-trunk_optimizer,embedder_optimizer,loss_optimizer = get_optimizers(trunk)
-trunk_schedule, embedder_schedule, loss_schedule= get_schedulers(trunk_optimizer,embedder_optimizer,loss_optimizer,train_dataloader)
+trunk_optimizer,embedder_optimizer = get_optimizers(trunk,embedder)
+trunk_schedule, embedder_schedule= get_schedulers(trunk_optimizer,embedder_optimizer,train_dataloader)
 
 
 distance = distances.CosineSimilarity()
 reducer = reducers.ThresholdReducer(low=0)
-loss_func = losses.TripletMarginLoss(margin=0.2, distance=distance, reducer=reducer)
+loss_func = losses.TripletMarginLoss(margin=0.2)
 miner = miners.TripletMarginMiner(margin=0.2, distance=distance, type_of_triplets="all")
 
 hooks = getHooks(logPath=logsPath,tensorboardPath=tensorboardPath)
@@ -95,10 +98,11 @@ end_of_epoch_hook = attachEndOfEpochHook(hooks,tester=tester,dataset_dict=datase
 
 trainer = HotelTrainer(
     models={"trunk": trunk, "embedder": embedder},
-    optimizers={"trunk_optimizer": trunk_optimizer, "embedder_optimizer": embedder_optimizer, "metric_loss_optimizer": loss_optimizer},
+    optimizers={"trunk_optimizer": trunk_optimizer, "embedder_optimizer": embedder_optimizer},
     batch_size=args.batch_size,
     loss_funcs={"metric_loss": loss_func},
     mining_funcs={"tuple_miner":miner},
+    sampler = sampler,
     dataset=train_dataset,
     data_device=args.DEVICE,
     data_and_label_getter = data_and_label_getter,
@@ -108,7 +112,7 @@ trainer = HotelTrainer(
     lr_schedulers={
         'trunk_scheduler_by_iteration': trunk_schedule,
         'embedder_scheduler_by_iteration': embedder_schedule,
-        'metric_loss_scheduler_by_iteration': loss_schedule,
+        # 'metric_loss_scheduler_by_iteration': loss_schedule,
     },
     accumulation_steps=args.ACCUMULATION_STEPS
 )

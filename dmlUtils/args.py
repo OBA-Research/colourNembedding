@@ -2,7 +2,7 @@ from pathlib import Path
 import torch
 
 class args:
-    epoch = 5
+    epoch = 40
     batch_size = 32
     lr=1e-3
     seed = 2024

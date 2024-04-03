@@ -56,14 +56,13 @@ def getEmbedder(trunk_output_size,embedding_size):
     embedder = nn.Linear(trunk_output_size, embedding_size).to(args.DEVICE)
     return embedder
 
-def get_optimizers(trunk):
+def get_optimizers(trunk,embedder):
     trunk_optimizer = torch.optim.Adam(trunk.parameters(), lr=args.lr)
-    embedder_optimizer = torch.optim.Adam(trunk.parameters(), lr=args.lr)
-    loss_optimizer = torch.optim.Adam(trunk.parameters(), lr=args.lr)
+    embedder_optimizer = torch.optim.Adam(embedder.parameters(), lr=args.lr)
+    # loss_optimizer = torch.optim.Adam(trunk.parameters(), lr=args.lr)
+    return trunk_optimizer, embedder_optimizer
 
-    return trunk_optimizer, embedder_optimizer,loss_optimizer
-
-def get_schedulers(trunk_optimizer,embedder_optimizer,loss_optimizer,train_dataloader):
+def get_schedulers(trunk_optimizer,embedder_optimizer,train_dataloader):
     trunk_schedule = torch.optim.lr_scheduler.OneCycleLR(
                         trunk_optimizer,
                         max_lr=args.lr,
@@ -84,17 +83,17 @@ def get_schedulers(trunk_optimizer,embedder_optimizer,loss_optimizer,train_datal
                         pct_start=0.1,
                         anneal_strategy="cos",
                     )
-    loss_schedule = torch.optim.lr_scheduler.OneCycleLR(
-                        loss_optimizer,
-                        max_lr=args.lr,
-                        epochs=args.epoch,
-                        steps_per_epoch=len(train_dataloader),
-                        div_factor=10,
-                        final_div_factor=1,
-                        pct_start=0.1,
-                        anneal_strategy="cos",
-                    )
-    return trunk_schedule, embedder_schedule,loss_schedule
+    # loss_schedule = torch.optim.lr_scheduler.OneCycleLR(
+    #                     loss_optimizer,
+    #                     max_lr=args.lr,
+    #                     epochs=args.epoch,
+    #                     steps_per_epoch=len(train_dataloader),
+    #                     div_factor=10,
+    #                     final_div_factor=1,
+    #                     pct_start=0.1,
+    #                     anneal_strategy="cos",
+    #                 )
+    return trunk_schedule, embedder_schedule
 
 # class TrunkModel(nn.Module):
 #     def __init__(self, num_classes,backbone_name="efficientnet_b0"):
