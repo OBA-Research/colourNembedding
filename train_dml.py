@@ -11,14 +11,10 @@ from dmlUtils.models import getTrunk,getEmbedder,get_optimizers,get_schedulers,H
 from pathlib import Path
 
 import pandas as pd
-import torch
-from torch import nn
+
 from torch.utils.data import DataLoader
 
-from tqdm import tqdm
-
-from pytorch_metric_learning import losses, miners, distances, testers,reducers, samplers
-from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
+from pytorch_metric_learning import losses, miners, distances,reducers, samplers
 import pytorch_metric_learning
 import logging
 logging.getLogger().setLevel(logging.INFO)
@@ -35,6 +31,7 @@ modelsPath = Path().absolute().joinpath("artefacts/dml/models")
 df_pikcle_dir = Path().absolute().joinpath("dataset/randomHotels/randomHotelsFeats2.pkl")
 df = pd.read_pickle(df_pikcle_dir)
 df = df.astype({"hotel_id":"str"})
+args.df = df
 
 # Split data into train and validation
 train_df,validation_df = splitData(df)
@@ -105,22 +102,16 @@ trainer = HotelTrainer(
     sampler = sampler,
     dataset=train_dataset,
     data_device=args.DEVICE,
-    data_and_label_getter = data_and_label_getter,
+    # data_and_label_getter = data_and_label_getter,
     dataloader_num_workers=args.N_WORKER,
     end_of_iteration_hook=hooks.end_of_iteration_hook,
     end_of_epoch_hook=end_of_epoch_hook,
     lr_schedulers={
         'trunk_scheduler_by_iteration': trunk_schedule,
         'embedder_scheduler_by_iteration': embedder_schedule,
-        # 'metric_loss_scheduler_by_iteration': loss_schedule,
     },
-    accumulation_steps=args.ACCUMULATION_STEPS
+    accumulation_steps=args.ACCUMULATION_STEPS,
+    feats_df = args.df.copy(),
+    improve_embeddings_with=args.COLOUR_FEAT
 )
-
 trainer.train(num_epochs=args.epoch)
-
-# loss_histories = hooks.get_loss_history()
-# print(loss_histories)
-# # Get all accuracy histories
-# acc_histories = hooks.get_accuracy_history(tester, "val", return_all_metrics=True)
-# print(acc_histories)

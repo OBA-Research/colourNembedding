@@ -16,4 +16,7 @@ class args:
     embedding_size = 128
     ACCUMULATION_STEPS = 10
     N_CLASSES = 1000
+    COLOUR_FEAT = None
+    df = None
+    LOGGER_NAME = "EXPERIMENTAL"
     

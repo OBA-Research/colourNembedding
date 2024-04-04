@@ -3,6 +3,7 @@ import pytorch_metric_learning.utils.logging_presets as LP
 from pytorch_metric_learning import testers
 from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
 from pytorch_metric_learning.utils import accuracy_calculator
+from pytorch_metric_learning.utils import common_functions as c_f
 
 import numpy as np
 import random
@@ -10,12 +11,10 @@ import os
 from dmlUtils.args import args
 from dmlUtils.hotelsDataLoader import data_and_label_getter
 
-from tqdm import tqdm
+import logging
+logger = logging.getLogger(args.LOGGER_NAME)
 
-def getHooks(logPath,tensorboardPath):
-    record_keeper, _, _ = LP.get_record_keeper(logPath,tensorboard_folder=tensorboardPath)
-    hooks = LP.get_hook_container(record_keeper, primary_metric='mean_average_precision')
-    return hooks
+import tqdm
 
 class NewCalculator(AccuracyCalculator):
     def calculate_precision_at_5(self, knn_labels, query_labels, **kwargs):
@@ -26,9 +25,128 @@ class NewCalculator(AccuracyCalculator):
 
     def requires_knn(self):
         return super().requires_knn() + ["precision_at_5"] 
+class HotelTester(testers.BaseTester):
+    def __init__(self, *args,feats_df = None, improve_embeddings_with=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.img_ids = None
+        self.feats_df = feats_df
+        self.colourKey = improve_embeddings_with
+
+    def compute_all_embeddings(self, dataloader, trunk_model, embedder_model):
+        s, e = 0, 0
+        with torch.no_grad():
+            for i, data in enumerate(tqdm.tqdm(dataloader)):
+                img, label, self.img_ids = self.data_and_label_getter(data)
+                # print(label)
+                # print(self.img_ids)
+                label = c_f.process_label(label, "all", self.label_mapper)
+                q = self.get_embeddings_for_eval(trunk_model, embedder_model, img)
+                if label.dim() == 1:
+                    label = label.unsqueeze(1)
+                if i == 0:
+                    labels = torch.zeros(
+                        len(dataloader.dataset),
+                        label.size(1),
+                        device=self.data_device,
+                        dtype=label.dtype,
+                    )
+                    all_q = torch.zeros(
+                        len(dataloader.dataset),
+                        q.size(1),
+                        device=self.data_device,
+                        dtype=q.dtype,
+                    )
+                e = s + q.size(0)
+                all_q[s:e] = q
+                labels[s:e] = label
+                s = e
+        if(self.colourKey):
+            logger.info(f"Embeddings improved with {self.colourKey} colour features!")
+        return all_q, labels 
+    
+    def _extractColorFeatures(self,):
+        """
+        return color features
+        """
+        color_feature = []
+        for img_id in self.img_ids:
+            color_feats = self.feats_df[self.feats_df.image_id==img_id][self.colourKey].values[0]
+            color_feature.append(color_feats)
+        return color_feature
+
+    def _fuseFeatures(self,features_embedding,color_feature):
+        """
+        return fused features i.e. embedding + color_features
+        """
+        fused_features = []
+        for i,colorFeats in enumerate(color_feature):
+            colorFeats =torch.tensor(colorFeats,dtype=torch.float).to(args.DEVICE)
+            embedding = features_embedding[i]
+            features = torch.cat((embedding,colorFeats))
+            fused_features.append(features)
+        return torch.stack(fused_features)
+    
+    def get_embeddings_for_eval(self, trunk_model, embedder_model, input_imgs):
+        input_imgs = c_f.to_device(
+            input_imgs, device=self.data_device, dtype=self.dtype
+        )
+        trunk_output = trunk_model(input_imgs)
+        if self.use_trunk_output:
+            return trunk_output
+        embeddings = embedder_model(trunk_output)
+        if(self.colourKey):
+            # Extract & Fuse embeddings and color features
+            color_feature = self._extractColorFeatures()
+            embeddings = self._fuseFeatures(embeddings,color_feature)
+        return embeddings
+
+    ##############GlobalEmbeddingSpaceTester stuff start ###########################
+    def do_knn_and_accuracies(
+    self, accuracies, embeddings_and_labels, query_split_name, reference_split_names):
+        (
+            query_embeddings,
+            query_labels,
+            reference_embeddings,
+            reference_labels,
+        ) = self.set_reference_and_query(
+            embeddings_and_labels, query_split_name, reference_split_names
+        )
+        self.label_levels = self.label_levels_to_evaluate(query_labels)
+
+        for L in self.label_levels:
+            curr_query_labels = query_labels[:, L]
+            curr_reference_labels = reference_labels[:, L]
+            a = self.accuracy_calculator.get_accuracy(
+                query_embeddings,
+                curr_query_labels,
+                reference_embeddings,
+                curr_reference_labels,
+                self.ref_includes_query(query_split_name, reference_split_names),
+            )
+            for metric, v in a.items():
+                keyname = self.accuracies_keyname(metric, label_hierarchy_level=L)
+                accuracies[keyname] = v
+        if len(self.label_levels) > 1:
+            self.calculate_average_accuracies(
+                accuracies,
+                self.accuracy_calculator.get_curr_metrics(),
+                self.label_levels,
+            )
+        ##############GlobalEmbeddingSpaceTester stuff end###########################
+
+
+
+######################Some helping/abstracting functions################################
+            
+def getHooks(logPath,tensorboardPath):
+    record_keeper, _, _ = LP.get_record_keeper(logPath,tensorboard_folder=tensorboardPath)
+    hooks = LP.get_hook_container(record_keeper, primary_metric='mean_average_precision')
+    return hooks
 
 def getTester(hooks):
-    tester = testers.GlobalEmbeddingSpaceTester(
+    tester = HotelTester(
+    feats_df=args.df.copy(),
+    improve_embeddings_with=args.COLOUR_FEAT,
     end_of_testing_hook=hooks.end_of_testing_hook,
     accuracy_calculator=NewCalculator(
         include=['mean_average_precision','precision_at_1','precision_at_5'],
@@ -37,7 +155,7 @@ def getTester(hooks):
     dataloader_num_workers=args.N_WORKER,
     data_device=args.DEVICE,
     batch_size=args.batch_size,
-    data_and_label_getter = data_and_label_getter
+    # data_and_label_getter = data_and_label_getter
 )
     return tester
 
@@ -102,7 +220,7 @@ def load_checkpoint(model, scheduler, optimizer, name):
     scheduler.load_state_dict(checkpoint["scheduler"])
     return model, scheduler, optimizer, checkpoint["epoch"]
 
-
+###################################### From scratch start #######################################################
 def generateFeatures(dataloader,split_set,model,improveEmbedding = False,colorFeat= None):
     features_all= []
     target_all=[]
@@ -139,10 +257,6 @@ def test_dml(train_loader,test_loader, model,accuracy_calculator,improveEmbeddin
     train_embeddings, train_labels = generateFeatures(train_loader,"Train", model,improveEmbedding,colorFeat)
     test_embeddings, test_labels = generateFeatures(test_loader,"Test", model,improveEmbedding,colorFeat)
 
-    # print(test_embeddings.shape)
-    # print(test_labels.shape)
-    # print(train_embeddings.shape)
-    # print(train_labels.shape)
     print("Computing accuracy...")
     accuracies = accuracy_calculator.get_accuracy(
         test_embeddings, test_labels, train_embeddings, train_labels, False
@@ -187,5 +301,4 @@ def trainEpoch(dataloader,model,loss_func,miner, optimizer, scheduler, epoch,epo
             t.set_description(desc)
         
     return np.mean(losses)
-
-
+###################################### From scratch end #######################################################
