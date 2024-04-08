@@ -30,13 +30,10 @@ modelsPath = Path().absolute().joinpath("artefacts/dml/models")
 
 df_pikcle_dir = Path().absolute().joinpath("dataset/randomHotels/randomHotelsFeats2.pkl")
 df = pd.read_pickle(df_pikcle_dir)
-df = df.astype({"hotel_id":"str"})
 args.df = df
 
 # Split data into train and validation
 train_df,validation_df = splitData(df)
-# print(f"Train data sample: {train_df.shape[0]} \nValidation data sample: {validation_df.shape[0]}")
-# print(validation_df.head())
 
 # extract training and validation paths
 train_imgs_dir = getImgsDirs(train_df)
@@ -70,12 +67,22 @@ validation_dataloader = DataLoader(
 print("Data Loaded successfully \n")
 
 
-
 dataset_dict = {"train": train_dataset, "val": validation_dataset}
 
 sampler = samplers.MPerClassSampler(
     train_df.hotel_id, m=4, length_before_new_iter=len(train_dataset)
 )
+
+###################Experiments########################################
+Exps = [None,'hsv_feats', 'rgb_feats',
+       'hsv_feats_10', 'rgb_feats_10', 
+       'hsv_feats_15', 'rgb_feats_15',
+       'hist_feats_rgb_4', 'hist_feats_hsv_4', 
+       'hist_feats_rgb_8','hist_feats_hsv_8', 
+       'hist_feats_rgb_16', 'hist_feats_hsv_16']
+# Current focus
+args.COLOUR_FEAT = Exps[4]
+print(">>>>>>>>>>>>>>>>>>>> Experiment colour feature:",args.COLOUR_FEAT,"<<<<<<<<<<<<<<<<<<<<<<<")
 
 # Instantiate models
 trunk = getTrunk()
@@ -87,7 +94,7 @@ trunk_schedule, embedder_schedule= get_schedulers(trunk_optimizer,embedder_optim
 distance = distances.CosineSimilarity()
 reducer = reducers.ThresholdReducer(low=0)
 loss_func = losses.TripletMarginLoss(margin=0.2)
-miner = miners.TripletMarginMiner(margin=0.2, distance=distance, type_of_triplets="all")
+miner = miners.TripletMarginMiner(margin=0.2, distance=distance, type_of_triplets="hard")
 
 hooks = getHooks(logPath=logsPath,tensorboardPath=tensorboardPath)
 tester = getTester(hooks)
