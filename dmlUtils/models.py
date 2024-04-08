@@ -46,11 +46,13 @@ class HotelTrainer(trainers.MetricLossOnly):
         return self.maybe_do_batch_mining(data, labels)
            
     def calculate_loss(self, curr_batch):
-        # data, labels,img_ids = curr_batch
+        # print(curr_batch)
         data, labels = curr_batch
         # with torch.autocast(device_type=args.DEVICE):
         embeddings = self.compute_embeddings(data)
+        # print(embeddings)
         indices_tuple = self.maybe_mine_embeddings(embeddings, labels)
+        # print(indices_tuple[1])
         self.losses["metric_loss"] = self.maybe_get_metric_loss(
             embeddings, labels, indices_tuple
         )

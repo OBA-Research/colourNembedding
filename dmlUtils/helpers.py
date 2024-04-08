@@ -22,9 +22,24 @@ class NewCalculator(AccuracyCalculator):
                                                   query_labels[:, None], 5,
                                                   self.avg_of_avgs,self.return_per_class,
                                                   self.label_comparison_fn)
+    def calculate_precision_at_4(self, knn_labels, query_labels, **kwargs):
+        return accuracy_calculator.precision_at_k(knn_labels, 
+                                                  query_labels[:, None], 4,
+                                                  self.avg_of_avgs,self.return_per_class,
+                                                  self.label_comparison_fn)
+    def calculate_precision_at_3(self, knn_labels, query_labels, **kwargs):
+        return accuracy_calculator.precision_at_k(knn_labels, 
+                                                  query_labels[:, None], 3,
+                                                  self.avg_of_avgs,self.return_per_class,
+                                                  self.label_comparison_fn)
+    def calculate_precision_at_2(self, knn_labels, query_labels, **kwargs):
+        return accuracy_calculator.precision_at_k(knn_labels, 
+                                                  query_labels[:, None], 2,
+                                                  self.avg_of_avgs,self.return_per_class,
+                                                  self.label_comparison_fn)
 
     def requires_knn(self):
-        return super().requires_knn() + ["precision_at_5"] 
+        return super().requires_knn() + ["precision_at_5","precision_at_4","precision_at_3","precision_at_2"] 
 class HotelTester(testers.BaseTester):
     def __init__(self, *args,feats_df = None, improve_embeddings_with=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -149,7 +164,7 @@ def getTester(hooks):
     improve_embeddings_with=args.COLOUR_FEAT,
     end_of_testing_hook=hooks.end_of_testing_hook,
     accuracy_calculator=NewCalculator(
-        include=['mean_average_precision','precision_at_1','precision_at_5'],
+        include=['precision_at_1','precision_at_2','precision_at_3','precision_at_4','precision_at_5','mean_average_precision'],
         device=torch.device("cpu"),
         k=5),
     dataloader_num_workers=args.N_WORKER,
