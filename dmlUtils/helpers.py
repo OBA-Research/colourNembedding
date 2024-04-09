@@ -76,7 +76,7 @@ class HotelTester(testers.BaseTester):
                 labels[s:e] = label
                 s = e
         if(self.colourKey):
-            logger.info(f"Embeddings improved with {self.colourKey} colour features!")
+            logger.info(f"Embeddings fused with {self.colourKey} colour features!")
         return all_q, labels 
     
     def _extractColorFeatures(self,):

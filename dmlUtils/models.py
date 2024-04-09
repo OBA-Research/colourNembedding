@@ -29,7 +29,7 @@ class HotelTrainer(trainers.MetricLossOnly):
             self.step_optimizers()
             self.zero_grad()
         if(self.iteration + 1==1 and self.colourKey):
-            logger.info(f"Each Batch Embeddings will be improved with {self.colourKey} colour features!")
+            logger.info(f"Each Batch Embeddings will be fused with {self.colourKey} colour features!")
         
 
     

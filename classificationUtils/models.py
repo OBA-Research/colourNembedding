@@ -67,7 +67,7 @@ class EmbeddingModel(nn.Module):
 
     def classifyWithFusedFeatures(self,fused_features,classifer_to_use):
         """
-        return hotel class using improved embeddings 
+        return hotel class using fusion of embeddings and colour features
         """
         if classifer_to_use=="rgb":
             hotel_class = self.rgbClassifier(fused_features)

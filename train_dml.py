@@ -81,7 +81,7 @@ Exps = [None,'hsv_feats', 'rgb_feats',
        'hist_feats_rgb_8','hist_feats_hsv_8', 
        'hist_feats_rgb_16', 'hist_feats_hsv_16']
 # Current focus
-args.COLOUR_FEAT = Exps[4]
+args.COLOUR_FEAT = Exps[12]
 print(">>>>>>>>>>>>>>>>>>>> Experiment colour feature:",args.COLOUR_FEAT,"<<<<<<<<<<<<<<<<<<<<<<<")
 
 # Instantiate models
