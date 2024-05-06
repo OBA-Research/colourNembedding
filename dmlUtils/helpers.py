@@ -164,7 +164,8 @@ def getTester(hooks):
     improve_embeddings_with=args.COLOUR_FEAT,
     end_of_testing_hook=hooks.end_of_testing_hook,
     accuracy_calculator=NewCalculator(
-        include=['precision_at_1','precision_at_2','precision_at_3','precision_at_4','precision_at_5','mean_average_precision'],
+        # include=['precision_at_1','precision_at_2','precision_at_3','precision_at_4','precision_at_5','mean_average_precision'],
+        include=['precision_at_1','mean_average_precision'],
         device=torch.device("cpu"),
         k=5),
     dataloader_num_workers=args.N_WORKER,
