@@ -53,11 +53,12 @@ validation_dataloader = DataLoader(
 print("Data Loaded successfully \n")
 
 
-experiments = ["rgb_feats","rgb_feats_10","rgb_feats_15"]
+experiments = ["rgb_feats","rgb_feats_11","rgb_feats_18","rgb_feats_28","rgb_feats_43","rgb_feats_64","rgb_feats_100"]
 for focus in experiments:
     training_focus = focus
 
     rgb_size = len(df[training_focus][0])
+    print(f"features size: {rgb_size}")
     classifier_to_use = "rgb"
 
 
@@ -94,7 +95,7 @@ for focus in experiments:
         acc_top_1.append(val_acc_top_1)
         acc_top_5.append(val_acc_top_5)
         if prev_valid_acc<val_acc_top_5:
-            save_checkpoint(model, scheduler, optimizer, epoch, model_name, train_loss, train_score)
+            # save_checkpoint(model, scheduler, optimizer, epoch, model_name, train_loss, train_score)
             print("model saved..!!")
             prev_valid_acc = val_acc_top_5
             counter = 0
@@ -107,4 +108,4 @@ for focus in experiments:
 
     result_df = pd.DataFrame({"acc_top_1":acc_top_1,"acc_top_5":acc_top_5,"train_loss":train_loss,"train_score":train_score})
     result_df.to_csv(args.ARTEFACT_FOLDER+f"{training_focus}_metrics_df.csv",index=False)
-    print(f">>>>>>>>>>>>>>>>> Experiment {training_focus} is Done!!!!!!!")
+    print(f">>>>>>>>>>>>>>>>> Experiment {training_focus} is Done!!!!!!!\n")

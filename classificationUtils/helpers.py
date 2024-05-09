@@ -102,16 +102,16 @@ def test_classification(loader, model,colorFeat= None):
             y = decode_one_hot(y)
             x = model(x)
             #improve embedding
-            if(colorFeat=="rgb_feats" or colorFeat=="rgb_feats_10" or colorFeat=="rgb_feats_15"):
+            if("rgb_feats" in colorFeat):
                 color_feats = model.extractColorFeatures(img_ids,colorFeat)
                 x = model.fuseFeatures(x,color_feats)
                 outputs = model.rgbClassifier(x)
-            elif(colorFeat=="hsv_feats" or colorFeat=="hsv_feats_10"or colorFeat=="hsv_feats_15"):
+            elif("hsv_feats" in colorFeat):
                 color_feats = model.extractColorFeatures(img_ids,colorFeat)
                 x = model.fuseFeatures(x,color_feats)
                 outputs = model.hsvClassifier(x)
 
-            elif(colorFeat in ["hist_feats_rgb_4", "hist_feats_hsv_4", "hist_feats_rgb_8","hist_feats_hsv_8","hist_feats_rgb_16","hist_feats_hsv_16"]):
+            elif("hist_feats" in colorFeat):
                 color_feats = model.extractColorFeatures(img_ids,colorFeat)
                 x = model.fuseFeatures(x,color_feats)
                 outputs = model.histClassifier(x)
