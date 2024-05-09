@@ -52,8 +52,11 @@ validation_dataloader = DataLoader(
 )
 print("Data Loaded successfully \n")
 
-# Instantiate model with features size
-experiments = ["hist_feats_rgb_4","hist_feats_hsv_4","hist_feats_rgb_8","hist_feats_hsv_8","hist_feats_rgb_16","hist_feats_hsv_16"]
+
+experiments = ["hist_feats_rgb_5","hist_feats_hsv_5","hist_feats_rgb_11","hist_feats_hsv_11",
+               "hist_feats_rgb_18","hist_feats_hsv_18","hist_feats_rgb_28","hist_feats_hsv_28",
+               "hist_feats_rgb_43","hist_feats_hsv_43","hist_feats_rgb_64","hist_feats_hsv_64",
+               "hist_feats_rgb_100","hist_feats_hsv_100"]
 for focus in experiments:
     training_focus = focus
 
@@ -62,8 +65,8 @@ for focus in experiments:
     classifier_to_use = "hist"
 
 
+    # Instantiate model with features size
     model = EmbeddingModel(num_classes,df,hist_size=hist_size).to(args.DEVICE)
-
 
 
     criterion = nn.CrossEntropyLoss()
@@ -95,7 +98,7 @@ for focus in experiments:
         acc_top_1.append(val_acc_top_1)
         acc_top_5.append(val_acc_top_5)
         if prev_valid_acc<val_acc_top_5:
-            save_checkpoint(model, scheduler, optimizer, epoch, model_name, train_loss, train_score)
+            # save_checkpoint(model, scheduler, optimizer, epoch, model_name, train_loss, train_score)
             print("model saved..!!")
             prev_valid_acc = val_acc_top_5
             counter = 0
@@ -108,4 +111,4 @@ for focus in experiments:
 
     result_df = pd.DataFrame({"acc_top_1":acc_top_1,"acc_top_5":acc_top_5,"train_loss":train_loss,"train_score":train_score})
     result_df.to_csv(args.ARTEFACT_FOLDER+f"{training_focus}_metrics_df.csv",index=False)
-    print(f">>>>>>>>>>>>>>>>> Experiment {training_focus} is Done!!!!!!!")
+    print(f">>>>>>>>>>>>>>>>> Experiment {training_focus} is Done!!!!!!!\n")
