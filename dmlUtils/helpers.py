@@ -154,7 +154,7 @@ class HotelTester(testers.BaseTester):
 ######################Some helping/abstracting functions################################
             
 def getHooks(logPath,tensorboardPath):
-    record_keeper, _, _ = LP.get_record_keeper(logPath,tensorboard_folder=tensorboardPath)
+    record_keeper, _, _ = LP.get_record_keeper(logPath)
     hooks = LP.get_hook_container(record_keeper, primary_metric='mean_average_precision')
     return hooks
 
