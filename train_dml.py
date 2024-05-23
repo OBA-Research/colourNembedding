@@ -23,7 +23,7 @@ import faiss
 
 seed_everything(args.seed)
 
-logsPath = Path().absolute().joinpath("artefacts/dml/logs")
+
 tensorboardPath = Path().absolute().joinpath("artefacts/dml/tensorboard")
 modelsPath = Path().absolute().joinpath("artefacts/dml/models")
 
@@ -74,51 +74,57 @@ sampler = samplers.MPerClassSampler(
 )
 
 ###################Experiments########################################
-Exps = [None,'hsv_feats', 'rgb_feats',
-       'hsv_feats_10', 'rgb_feats_10', 
-       'hsv_feats_15', 'rgb_feats_15',
-       'hist_feats_rgb_4', 'hist_feats_hsv_4', 
-       'hist_feats_rgb_8','hist_feats_hsv_8', 
-       'hist_feats_rgb_16', 'hist_feats_hsv_16']
+Exps = [None]
+Exps1 = ["hsv_feats","hsv_feats_11","hsv_feats_18","hsv_feats_28","hsv_feats_43","hsv_feats_64","hsv_feats_100"]
+Exps2 = ["rgb_feats","rgb_feats_11","rgb_feats_18","rgb_feats_28","rgb_feats_43","rgb_feats_64","rgb_feats_100"]
+Exp3 = ["hist_feats_rgb_5","hist_feats_hsv_5","hist_feats_rgb_11","hist_feats_hsv_11",
+               "hist_feats_rgb_18","hist_feats_hsv_18","hist_feats_rgb_28","hist_feats_hsv_28",
+               "hist_feats_rgb_43","hist_feats_hsv_43","hist_feats_rgb_64","hist_feats_hsv_64",
+               "hist_feats_rgb_100","hist_feats_hsv_100"]
 # Current focus
-args.COLOUR_FEAT = Exps[12]
-print(">>>>>>>>>>>>>>>>>>>> Experiment colour feature:",args.COLOUR_FEAT,"<<<<<<<<<<<<<<<<<<<<<<<")
+for focus in Exps2:
+    args.COLOUR_FEAT = focus
+    if(focus==None):
+        logsPath = logsPath = Path().absolute().joinpath("artefacts/dml/logs/baseDml")
+    else:
+        logsPath = Path().absolute().joinpath(f"artefacts/dml/logs/{focus}")
+    print(">>>>>>>>>>>>>>>>>>>> Experiment colour feature:",args.COLOUR_FEAT,"<<<<<<<<<<<<<<<<<<<<<<<")
 
-# Instantiate models
-trunk = getTrunk()
-embedder = getEmbedder(trunk_output_size=trunk.num_features,embedding_size=args.embedding_size)
-trunk_optimizer,embedder_optimizer = get_optimizers(trunk,embedder)
-trunk_schedule, embedder_schedule= get_schedulers(trunk_optimizer,embedder_optimizer,train_dataloader)
+    # Instantiate models
+    trunk = getTrunk()
+    embedder = getEmbedder(trunk_output_size=trunk.num_features,embedding_size=args.embedding_size)
+    trunk_optimizer,embedder_optimizer = get_optimizers(trunk,embedder)
+    trunk_schedule, embedder_schedule= get_schedulers(trunk_optimizer,embedder_optimizer,train_dataloader)
 
 
-distance = distances.CosineSimilarity()
-reducer = reducers.ThresholdReducer(low=0)
-loss_func = losses.TripletMarginLoss(margin=0.2)
-miner = miners.TripletMarginMiner(margin=0.2, distance=distance, type_of_triplets="hard")
+    distance = distances.CosineSimilarity()
+    reducer = reducers.ThresholdReducer(low=0)
+    loss_func = losses.TripletMarginLoss(margin=0.2)
+    miner = miners.TripletMarginMiner(margin=0.2, distance=distance, type_of_triplets="all")
 
-hooks = getHooks(logPath=logsPath,tensorboardPath=tensorboardPath)
-tester = getTester(hooks)
-end_of_epoch_hook = attachEndOfEpochHook(hooks,tester=tester,dataset_dict=dataset_dict,model_path=modelsPath)
+    hooks = getHooks(logPath=logsPath,tensorboardPath=tensorboardPath)
+    tester = getTester(hooks)
+    end_of_epoch_hook = attachEndOfEpochHook(hooks,tester=tester,dataset_dict=dataset_dict,model_path=modelsPath)
 
-trainer = HotelTrainer(
-    models={"trunk": trunk, "embedder": embedder},
-    optimizers={"trunk_optimizer": trunk_optimizer, "embedder_optimizer": embedder_optimizer},
-    batch_size=args.batch_size,
-    loss_funcs={"metric_loss": loss_func},
-    mining_funcs={"tuple_miner":miner},
-    sampler = sampler,
-    dataset=train_dataset,
-    data_device=args.DEVICE,
-    # data_and_label_getter = data_and_label_getter,
-    dataloader_num_workers=args.N_WORKER,
-    end_of_iteration_hook=hooks.end_of_iteration_hook,
-    end_of_epoch_hook=end_of_epoch_hook,
-    lr_schedulers={
-        'trunk_scheduler_by_iteration': trunk_schedule,
-        'embedder_scheduler_by_iteration': embedder_schedule,
-    },
-    accumulation_steps=args.ACCUMULATION_STEPS,
-    feats_df = args.df.copy(),
-    improve_embeddings_with=args.COLOUR_FEAT
-)
-trainer.train(num_epochs=args.epoch)
+    trainer = HotelTrainer(
+        models={"trunk": trunk, "embedder": embedder},
+        optimizers={"trunk_optimizer": trunk_optimizer, "embedder_optimizer": embedder_optimizer},
+        batch_size=args.batch_size,
+        loss_funcs={"metric_loss": loss_func},
+        mining_funcs={"tuple_miner":miner},
+        sampler = sampler,
+        dataset=train_dataset,
+        data_device=args.DEVICE,
+        # data_and_label_getter = data_and_label_getter,
+        dataloader_num_workers=args.N_WORKER,
+        end_of_iteration_hook=hooks.end_of_iteration_hook,
+        end_of_epoch_hook=end_of_epoch_hook,
+        lr_schedulers={
+            'trunk_scheduler_by_iteration': trunk_schedule,
+            'embedder_scheduler_by_iteration': embedder_schedule,
+        },
+        accumulation_steps=args.ACCUMULATION_STEPS,
+        feats_df = args.df.copy(),
+        improve_embeddings_with=args.COLOUR_FEAT
+    )
+    trainer.train(num_epochs=args.epoch)
