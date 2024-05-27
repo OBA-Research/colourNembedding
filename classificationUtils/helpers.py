@@ -89,7 +89,7 @@ def load_checkpoint(model, scheduler, optimizer, name):
     return model, scheduler, optimizer, checkpoint["epoch"]
 
 
-def test_classification(loader, model,colorFeat= None):
+def test_classification(loader, model,colorFeat= "None"):
     targets_all = []
     outputs_all = []
     outputs = None
