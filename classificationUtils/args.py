@@ -8,8 +8,8 @@ class args:
     seed = 2024
     DEVICE = "mps" if torch.backends.mps.is_built() else "cpu"
     N_MATCHES = 5
-    OUTPUT_FOLDER = str(Path().absolute().joinpath("models"))+"/"
-    ARTEFACT_FOLDER = str(Path().absolute().joinpath("artefacts"))+"/"
+    OUTPUT_FOLDER = str(Path().absolute().joinpath("models","classification","models"))+"/"
+    ARTEFACT_FOLDER = str(Path().absolute().joinpath("artefacts","classification","logs"))+"/"
     IMG_SIZE = 224
     
 
