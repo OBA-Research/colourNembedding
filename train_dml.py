@@ -82,7 +82,7 @@ Exp3 = ["hist_feats_rgb_5","hist_feats_hsv_5","hist_feats_rgb_11","hist_feats_hs
                "hist_feats_rgb_43","hist_feats_hsv_43","hist_feats_rgb_64","hist_feats_hsv_64",
                "hist_feats_rgb_100","hist_feats_hsv_100"]
 # Current focus
-for focus in Exps2:
+for focus in Exp3:
     args.COLOUR_FEAT = focus
     if(focus==None):
         logsPath = logsPath = Path().absolute().joinpath("artefacts/dml/logs/baseDml")
@@ -100,7 +100,7 @@ for focus in Exps2:
     distance = distances.CosineSimilarity()
     reducer = reducers.ThresholdReducer(low=0)
     loss_func = losses.TripletMarginLoss(margin=0.2)
-    miner = miners.TripletMarginMiner(margin=0.2, distance=distance, type_of_triplets="all")
+    miner = miners.TripletMarginMiner(margin=0.2, distance=distance, type_of_triplets="hard")
 
     hooks = getHooks(logPath=logsPath,tensorboardPath=tensorboardPath)
     tester = getTester(hooks)
