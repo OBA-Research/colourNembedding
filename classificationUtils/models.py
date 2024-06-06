@@ -5,7 +5,7 @@ from classificationUtils.args import args
 
 class EmbeddingModel(nn.Module):
     def __init__(self, num_classes,features_dataframe,rgb_size=None,hsv_size=None,hist_size=None,embedding_size=128,
-                 backbone_name="efficientnet_b0"):
+                 backbone_name="efficientnet_b4"):
         super().__init__()
         
         self.df = features_dataframe 

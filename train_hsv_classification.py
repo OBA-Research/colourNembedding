@@ -53,8 +53,8 @@ validation_dataloader = DataLoader(
 print("Data Loaded successfully \n")
 
 
-experiments = ["hsv_feats","hsv_feats_11","hsv_feats_18","hsv_feats_28","hsv_feats_43","hsv_feats_64","hsv_feats_100"]
-for focus in experiments:
+benchmark_experiments = ["hsv_feats","hsv_feats_11","hsv_feats_18"]
+for focus in benchmark_experiments:
     training_focus = focus
 
     hsv_size = len(df[training_focus][0])
@@ -107,5 +107,5 @@ for focus in experiments:
         print(f"\n.............................{epoch} end............................")
 
     result_df = pd.DataFrame({"acc_top_1":acc_top_1,"acc_top_5":acc_top_5,"train_loss":train_loss,"train_score":train_score})
-    result_df.to_csv(args.ARTEFACT_FOLDER+f"{training_focus}_metrics_df.csv",index=False)
+    result_df.to_csv(args.ARTEFACT_FOLDER+f"benchmark_classification_{training_focus}_metrics_df.csv",index=False)
     print(f">>>>>>>>>>>>>>>>> Experiment {training_focus} is Done!!!!!!!\n")

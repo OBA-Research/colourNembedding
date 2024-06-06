@@ -88,7 +88,7 @@ class HotelTrainer(trainers.MetricLossOnly):
 
 ######################Some helping/abstracting functions################################
 
-def getTrunk(backbone_name="efficientnet_b0"):
+def getTrunk(backbone_name="efficientnet_b4"):
     trunk = timm.create_model(model_name = backbone_name, pretrained = True)
     trunk.classifier = nn.Identity()
     trunk  = trunk.to(args.DEVICE)

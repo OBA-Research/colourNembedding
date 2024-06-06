@@ -75,19 +75,18 @@ sampler = samplers.MPerClassSampler(
 
 ###################Experiments########################################
 Exps = [None]
-Exps1 = ["hsv_feats","hsv_feats_11","hsv_feats_18","hsv_feats_28","hsv_feats_43","hsv_feats_64","hsv_feats_100"]
-Exps2 = ["rgb_feats","rgb_feats_11","rgb_feats_18","rgb_feats_28","rgb_feats_43","rgb_feats_64","rgb_feats_100"]
+Exps1 = ["hsv_feats","hsv_feats_11","hsv_feats_18"]
+Exps2 = ["rgb_feats","rgb_feats_11","rgb_feats_18"]
 Exp3 = ["hist_feats_rgb_5","hist_feats_hsv_5","hist_feats_rgb_11","hist_feats_hsv_11",
-               "hist_feats_rgb_18","hist_feats_hsv_18","hist_feats_rgb_28","hist_feats_hsv_28",
-               "hist_feats_rgb_43","hist_feats_hsv_43","hist_feats_rgb_64","hist_feats_hsv_64",
-               "hist_feats_rgb_100","hist_feats_hsv_100"]
+               "hist_feats_rgb_18","hist_feats_hsv_18"]
 # Current focus
-for focus in Exp3:
+for focus in Exps2:
     args.COLOUR_FEAT = focus
     if(focus==None):
-        logsPath = logsPath = Path().absolute().joinpath("artefacts/dml/logs/baseDml")
+        logsPath = logsPath = Path().absolute().joinpath("artefacts/dml/logs/benchmark_baseDml")
     else:
-        logsPath = Path().absolute().joinpath(f"artefacts/dml/logs/{focus}")
+        benchPath = "benchmark_"+focus
+        logsPath = Path().absolute().joinpath(f"artefacts/dml/logs/{benchPath}")
     print(">>>>>>>>>>>>>>>>>>>> Experiment colour feature:",args.COLOUR_FEAT,"<<<<<<<<<<<<<<<<<<<<<<<")
 
     # Instantiate models

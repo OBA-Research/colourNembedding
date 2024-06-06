@@ -53,11 +53,9 @@ validation_dataloader = DataLoader(
 print("Data Loaded successfully \n")
 
 
-experiments = ["hist_feats_rgb_5","hist_feats_hsv_5","hist_feats_rgb_11","hist_feats_hsv_11",
-               "hist_feats_rgb_18","hist_feats_hsv_18","hist_feats_rgb_28","hist_feats_hsv_28",
-               "hist_feats_rgb_43","hist_feats_hsv_43","hist_feats_rgb_64","hist_feats_hsv_64",
-               "hist_feats_rgb_100","hist_feats_hsv_100"]
-for focus in experiments:
+benchmark_experiments = ["hist_feats_rgb_5","hist_feats_hsv_5","hist_feats_rgb_11","hist_feats_hsv_11",
+               "hist_feats_rgb_18","hist_feats_hsv_18"]
+for focus in benchmark_experiments:
     training_focus = focus
 
     hist_size = len(df[training_focus][0])
@@ -110,5 +108,5 @@ for focus in experiments:
         print(f"\n.............................{epoch} end............................")
 
     result_df = pd.DataFrame({"acc_top_1":acc_top_1,"acc_top_5":acc_top_5,"train_loss":train_loss,"train_score":train_score})
-    result_df.to_csv(args.ARTEFACT_FOLDER+f"{training_focus}_metrics_df.csv",index=False)
+    result_df.to_csv(args.ARTEFACT_FOLDER+f"benchmark_classification_{training_focus}_metrics_df.csv",index=False)
     print(f">>>>>>>>>>>>>>>>> Experiment {training_focus} is Done!!!!!!!\n")
