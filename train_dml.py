@@ -80,7 +80,7 @@ Exps2 = ["rgb_feats","rgb_feats_11","rgb_feats_18"]
 Exp3 = ["hist_feats_rgb_5","hist_feats_hsv_5","hist_feats_rgb_11","hist_feats_hsv_11",
                "hist_feats_rgb_18","hist_feats_hsv_18"]
 # Current focus
-for focus in Exps2:
+for focus in Exp3:
     args.COLOUR_FEAT = focus
     if(focus==None):
         logsPath = logsPath = Path().absolute().joinpath("artefacts/dml/logs/benchmark_baseDml")
