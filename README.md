@@ -4,7 +4,7 @@ necessary for tasks like image geolocation, especially for indoor scenes where d
 deep metric learning and classification perspectives. Our results indicate that the integration of color features improves image embedding, surpassing the performance of using embedding alone.
 
 ![methods](/static/colorPaletteEmbeddingMethods.png)
-# Links to full research paper
+# Links to our research paper
 - [Arxiv version]()
 - [Conference version]()
 # Dependencies
