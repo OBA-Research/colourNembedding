@@ -5,8 +5,8 @@ deep metric learning and classification perspectives. Our results indicate that 
 
 ![methods](/static/colorPaletteEmbeddingMethods.png)
 # Links to our research paper
-- [Arxiv version]()
-- [Conference version]()
+- [IEEE Access Early Version](https://ieeexplore.ieee.org/document/10976713)
+- [IEEE Access Journal Version]()
 # Dependencies
 ```
 pip install -r requirements.txt
@@ -35,6 +35,9 @@ To reproduce any part or section of our results, edit the corresponding python s
 # Citation
 To cite this work, please use:
 ```
+O. Bamigbade, M. Scanlon and J. Sheppard, "Improving Image Embeddings with Colour Features in Indoor Scene Geolocation," in IEEE Access, doi: 10.1109/ACCESS.2025.3564496.
+keywords: {Image color analysis;Geology;Feature extraction;Histograms;Computational modeling;Computer architecture;Vectors;Measurement;Image retrieval;Computer vision;Classification;Colour descriptor;Deep metric learning;Embeddings;Image geolocation;Image retrieval;Indoor scenes},
+
 
 ```
 
