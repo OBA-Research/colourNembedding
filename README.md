@@ -35,10 +35,16 @@ To reproduce any part or section of our results, edit the corresponding python s
 # Citation
 To cite this work, please use:
 ```
-O. Bamigbade, M. Scanlon and J. Sheppard, "Improving Image Embeddings with Colour Features in Indoor Scene Geolocation," in IEEE Access, doi: 10.1109/ACCESS.2025.3564496.
-keywords: {Image color analysis;Geology;Feature extraction;Histograms;Computational modeling;Computer architecture;Vectors;Measurement;Image retrieval;Computer vision;Classification;Colour descriptor;Deep metric learning;Embeddings;Image geolocation;Image retrieval;Indoor scenes},
-
-
+@ARTICLE{10976713,
+  author={Bamigbade, Opeyemi and Scanlon, Mark and Sheppard, John},
+  journal={IEEE Access}, 
+  title={Improving Image Embeddings With Colour Features in Indoor Scene Geolocation}, 
+  year={2025},
+  volume={13},
+  number={},
+  pages={79860-79870},
+  keywords={Image color analysis;Geology;Feature extraction;Histograms;Computational modeling;Computer architecture;Vectors;Measurement;Image retrieval;Computer vision;Classification;color descriptor;deep metric learning;embeddings;image geolocation;image retrieval;indoor scenes},
+  doi={10.1109/ACCESS.2025.3564496}}
 ```
 
 
