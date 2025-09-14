@@ -34,7 +34,7 @@ To reproduce any part or section of our results, edit the corresponding python s
 
 # Citation
 To cite this work, please use:
-```
+```python
 @ARTICLE{10976713,
   author={Bamigbade, Opeyemi and Scanlon, Mark and Sheppard, John},
   journal={IEEE Access}, 
