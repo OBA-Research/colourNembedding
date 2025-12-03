@@ -5,7 +5,6 @@ deep metric learning and classification perspectives. Our results indicate that 
 
 ![methods](/static/colorPaletteEmbeddingMethods.png)
 # Links to our research paper
-- [IEEE Access Early Version](https://ieeexplore.ieee.org/document/10976713)
 - [IEEE Access Journal Version](https://ieeexplore.ieee.org/document/10976713)
 # Dependencies
 ```
